@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 [--max_depth N] /path/to_input_dir /path/to_output_dir"
+    echo "Usage: $0 [--max_depth N] /path/to_input_dir /path/to_output_dir" >&2
     exit 1
 fi
 
@@ -11,7 +11,11 @@ output_dir=""
 
 if [ "$1" == "--max_depth" ]; then
     if [ "$#" -lt 4 ]; then
-        echo "Usage: $0 [--max_depth N] /path/to_input_dir /path/to_output_dir"
+        echo "Usage: $0 [--max_depth N] /path/to_input_dir /path/to_output_dir" >&2
+        exit 1
+    fi
+    if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+        echo "Max depth must be a positive integer" >&2
         exit 1
     fi
     max_depth=$2
@@ -23,20 +27,21 @@ else
 fi
 
 if [ ! -d "$input_dir" ]; then
-    echo "Input directory does not exist: $input_dir"
+    echo "Input directory does not exist: $input_dir" >&2
     exit 1
 fi
 
-if [ ! -d "$output_dir" ]; then
-    mkdir -p "$output_dir"
-fi
+mkdir -p "$output_dir" || {
+    echo "Failed to create output directory: $output_dir" >&2
+    exit 1
+}
 
 copy_files() {
     local src=$1
     local dest=$2
     local current_depth=$3
     
-    if [ $max_depth -ne -1 ] && [ $current_depth -gt $max_depth ]; then
+    if [ "$max_depth" -ne -1 ] && [ "$current_depth" -gt "$max_depth" ]; then
         return
     fi
     
@@ -56,11 +61,11 @@ copy_files() {
             new_filename="${name}${ext}"
             
             while [ -f "$dest/$new_filename" ]; do
-                new_filename="${name}${counter}${ext}"
+                new_filename="${name}_${counter}${ext}"
                 ((counter++))
             done
             
-            cp "$item" "$dest/$new_filename"
+            cp "$item" "$dest/$new_filename" || echo "Failed to copy $item" >&2
         elif [ -d "$item" ]; then
             copy_files "$item" "$dest" $((current_depth + 1))
         fi
@@ -70,3 +75,4 @@ copy_files() {
 copy_files "$input_dir" "$output_dir" 1
 
 echo "Files copied successfully to $output_dir"
+exit 0
