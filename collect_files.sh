@@ -7,7 +7,7 @@ output="$2"
 shift 2
 
 depth=""
-[ "$#" -eq 1 ] && [[ "$1" =~ --max_depth=([0-9]+) ]] && depth="-maxdepth ${BASH_REMATCH[1]}"
+[ "$#" -eq 2 ] && [ "$1" = "--max_depth" ] && depth="-maxdepth $2"
 
 mkdir -p "$output"
 
