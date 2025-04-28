@@ -1,14 +1,30 @@
 #!/bin/bash
 
-if [ "$#" -lt 2 ]; then
-    exit 1
+[ "$#" -lt 2 ] && exit 1
+input="$1"; output="$2"; shift 2
+
+max_f=0; max_d=0
+if [ "$#" -ge 2 ] && [ "$1" = "--max_depth" ]; then
+  max_f=1; max_d="$2"
 fi
 
-input_dir="$1"
-output_dir="$2"
+mkdir -p "$output"
 
-mkdir -p "$output_dir"
+find "$input" -type f | while IFS= read -r file; do
+  rel="${file#"$input"/}"
 
-find "$input_dir" -type f | while read -r file; do
-    cp --backup=numbered "$file" "$output_dir"
+  if [ "$max_f" -eq 1 ]; then
+    IFS='/' read -ra parts <<< "$rel"
+    depth=${#parts[@]}
+
+    if [ "$depth" -gt "$max_d" ]; then
+      cut=$((depth - max_d))
+      newparts=( "${parts[@]:cut}" )
+      rel="$(IFS=/; echo "${newparts[*]}")"
+    fi
+  fi
+
+  dest="$output/$rel"
+  mkdir -p "$(dirname "$dest")"
+  cp "$file" "$dest"
 done
