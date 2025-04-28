@@ -7,12 +7,16 @@ output="$2"
 shift 2
 
 depth=""
-[ "$#" -eq 2 ] && [ "$1" = "--max_depth" ] && depth="-maxdepth $2"
+if [ "$#" -ge 2 ] && [ "$1" = "--max_depth" ]; then
+    depth="-maxdepth $2"
+fi
 
 mkdir -p "$output"
 
-find "$input" $depth -type f | while read -r file; do
-    rel_path="${file#$input/}"
-    mkdir -p "$(dirname "$output/$rel_path")"
-    cp "$file" "$output/$rel_path"
+cd "$input" || exit 1
+
+find . $depth -type f | while read -r file; do
+    dir=$(dirname "$file")
+    mkdir -p "$output/$dir"
+    cp "$file" "$output/$file"
 done
