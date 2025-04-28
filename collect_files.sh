@@ -1,14 +1,18 @@
 #!/bin/bash
 
-if [ "$#" -lt 2 ]; then
-    exit 1
-fi
+[ "$#" -lt 2 ] && exit 1
 
-input_dir="$1"
-output_dir="$2"
+input="$1"
+output="$2"
+shift 2
 
-mkdir -p "$output_dir"
+depth=""
+[ "$#" -eq 1 ] && [[ "$1" =~ --max_depth=([0-9]+) ]] && depth="-maxdepth ${BASH_REMATCH[1]}"
 
-find "$input_dir" -type f | while read -r file; do
-    cp --backup=numbered "$file" "$output_dir"
+mkdir -p "$output"
+
+find "$input" $depth -type f | while read -r file; do
+    rel_path="${file#$input/}"
+    mkdir -p "$(dirname "$output/$rel_path")"
+    cp "$file" "$output/$rel_path"
 done
